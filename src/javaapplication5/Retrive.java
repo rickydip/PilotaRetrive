@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Hashtable;
+import java.util.Vector;
 
 /**
  *
@@ -28,8 +29,11 @@ public class Retrive {
     //operatore logico da usare nella query di selezione
     //AND oppure OR
     private String op_logico;
-    //rappresenta la tabella kunena_message_text
+    //contiene le info estratte dalle tabelle di kunena
     private Hashtable <String,String[]> informazioni = new Hashtable <String,String[]>();
+    //contiene le info chiave, catid
+    private Hashtable <String,String> h = new Hashtable <String,String>();
+    
 
     //costruttore
     public Retrive(ConnDB connessione, String[] keys, int n_keys, String op_logico) {
@@ -90,8 +94,8 @@ public class Retrive {
 public void retrive(){
     
         Connection con = null;
-        PreparedStatement pst = null;
-        ResultSet rs = null;
+        PreparedStatement pst = null,pst1 = null;;
+        ResultSet rs = null, rs1 = null;
 
         PreparedStatement pst2 = null;
         ResultSet rs2 = null;
@@ -99,6 +103,7 @@ public void retrive(){
 String chiave ="";
 String[] vett_com =new String[1];//ospita la prima parte di informazioni: message
 String[] vett_com2=null;//ospita la seconda parte di informazioni: thread, catid,subject
+
 
 String[] vett=new String[4];
 for(int i=0;i<4;i++){vett[i]="";}
@@ -177,8 +182,20 @@ for(int i=0;i<4;i++){vett[i]="";}
                     vett_com =(String[])informazioni.get(chiave);
                      //ne aggiungo altre associate alla chiave
                         vett_com[1]=rs.getString(2);//thread
-                        vett_com[2]=rs.getString(3);//catid
+                        h.put(chiave,rs.getString(3));
+                        //
+                        String query_catId="SELECT alias FROM joomla.pbpfz_kunena_categories WHERE id ='" +rs.getString(3)+"';";
+                        System.out.println(query_catId);
+                        pst1 = con.prepareStatement(query_catId);
+                        rs1 = pst1.executeQuery();
+                        String xx ="";
+                        while (rs1.next()) { xx=rs1.getString(1);}
+                        //
+                        
+                        //
+                        vett_com[2]=xx;//catid
                         vett_com[3]=rs.getString(4);//subject
+                        
                         
                         //debug
                         System.out.print(chiave+":  ");
@@ -195,7 +212,24 @@ for(int i=0;i<4;i++){vett[i]="";}
                    System.out.println("*)Informazioni sulla chiave : "+chiave+" NON SONO PRESENTI, le completo)"); 
                    vett_com2[0]="";//message non presente
                    vett_com2[1]=rs.getString(2);//thread
-                   vett_com2[2]=rs.getString(3);//catid
+                   //
+            //       v.addElement(chiave);
+                   h.put(chiave,rs.getString(3));
+                   
+                   //
+                        String query_catId="SELECT alias FROM joomla.pbpfz_kunena_categories WHERE id ='" +rs.getString(3)+"';";
+                        System.out.println(query_catId);
+                        pst1 = con.prepareStatement(query_catId);
+                        rs1 = pst1.executeQuery();
+                        String xx ="";
+                        while (rs1.next()) { xx=rs1.getString(1);}
+                        //
+                        
+                        //
+                        vett_com2[2]=xx;//catid
+                   
+                                     
+                   //vett_com2[2]=rs.getString(3);//catid
                    vett_com2[3]=rs.getString(4);//subject
                    //le inserisco
                    informazioni.put(chiave, vett_com2);
@@ -222,8 +256,36 @@ for(int i=0;i<4;i++){vett[i]="";}
             
             int dim = informazioni.size();
             System.out.println("Per la ricerca delle key all'interno dei db, ho trovato occorrenze n°: "+dim);
+            int dim2 = h.size();
+           // System.out.println("L'hashtable che contiene chiave, catid ha elementi n°: "+dim2);
+           
             
+///STEP 3      costuire l'url
+      
+            String[] urls = new String [dim2];
+            String url1="http://localhost/Joomla_3.2.1-Stable-Full_Package/index.php/forum/index.php";
+         
             
+     
+            
+        
+       
+                
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
             
             
             
@@ -251,8 +313,7 @@ for(int i=0;i<4;i++){vett[i]="";}
     }//retrive    
     
     
-    
-    
+
     
     
 }//class

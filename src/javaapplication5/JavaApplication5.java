@@ -61,6 +61,9 @@ public class JavaApplication5 {
       keys[2]="topic";              //#
       String op_logico="OR";        //#
       //###############################
+      
+      
+      
       Retrive b = new Retrive(a,keys,n,op_logico);
       
        b.retrive(); 
