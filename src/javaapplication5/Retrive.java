@@ -158,13 +158,21 @@ String[] vett_com2=null;//ospita la seconda parte di informazioni: thread, catid
           
 //STEP 2            
             String selectFrom2 = "SELECT id ,thread,catid,subject FROM joomla.pbpfz_kunena_messages WHERE ";
-            String com2 = "", where_cond2 ="";
+            String com2 = "", where_cond2 ="",com3="",com4="",fine=";"; int flag_x=0;
             for(int i=0;i<getN_keys();i++){
                 if(i==0){ com2=" subject LIKE '%"+getKeys()[i]+"%' ";}
                 else{com2=getOp_logico()+" subject LIKE '%"+getKeys()[i]+"%' ";}
+                 System.out.println(vet2.size());
+                if(vet2.size()!=0 && flag_x!=1){
+                    flag_x=1;
+                for(int u=0;u<vet2.size();u++){
+                com3="OR id = '"+vet2.get(u)+"'";
+                com4=com4+com3;
+                }//for    
+                }//if
             where_cond2=where_cond2+com2;
             }//for 
-            where_cond2=where_cond2+";";
+            where_cond2=where_cond2+com4+fine;
             
             //System.out.println(where_cond2);
                     
@@ -221,7 +229,7 @@ String[] vett_com2=null;//ospita la seconda parte di informazioni: thread, catid
                   
                   
                    vet1.add(chiave);//salvo la chiave
-                   vet2.add(chiave);//salvo la chiave
+                   //vet2.add(chiave);//salvo la chiave
                   
                    //
                         String query_catId="SELECT alias FROM joomla.pbpfz_kunena_categories WHERE id ='" +rs.getString(3)+"';";
@@ -255,22 +263,7 @@ String[] vett_com2=null;//ospita la seconda parte di informazioni: thread, catid
             }//while
 /////////////////////////////
             
-            
-            
-//STEP 2.B            
-System.out.println("#########################FASE 2B  ########################");    
-            int dim3 =vet2.size();
-            System.out.println("Il vettore 2 che contiene le chiavi ha elementi n°: "+dim3);
-            
-            String queryb="";
-            
-            
-System.out.println("#########################################################");             
-/////////////////////7            
-            
-            
-            
-            
+           
             //ADESSO ho tutte le info sull'hastable
             
             
@@ -296,6 +289,7 @@ System.out.println("#########################################################");
          String alias = "";
          String thread = "";
          String subject= "";
+         String subject_ok = "";
          String id = "";
          
          String[] info = null;
@@ -312,7 +306,9 @@ System.out.println("#########################################################");
               subject = info[3];
               id = vet1.get(i); //chiave del post
              
-              url_finale =url_base+alias+"/"+thread+"-"+subject+".html#"+id;
+              subject_ok=trattaChar(subject);
+                      
+              url_finale =url_base+alias+"/"+thread+"-"+subject_ok+".html#"+id;
                System.out.println(url_finale);
               //urls[y] = url_finale;
               info=null;
@@ -365,7 +361,44 @@ System.out.println("#########################################################");
     }//retrive    
     
     
+public String trattaChar(String subject){
+ String subject_ok = "";  String b = "",s1="";
+ 
+ 
+//tolgo spazi inizio e fine
+subject = subject.trim();
+//la trasformo in minuscolo
+subject=subject.toLowerCase();
+//System.out.println(subject);
+subject = subject.replace(" ", "-");
+//System.out.println(subject);
+subject = subject.replace("--", "-");
+//System.out.println(subject);
+subject = subject.replace("à", "a");
+subject = subject.replace("ò", "o");
+subject = subject.replace("è", "e");
+subject = subject.replace("é", "e");
+subject = subject.replace("ù", "u");
+subject = subject.replace("ì", "i");
+subject = subject.replace("ç", "c");
 
+char a;String nuovo ="";
+for(int i=0;i<subject.length();i++){
+    a=subject.charAt(i);
+   if ((a<48 || a>57) && (a<97 || a>122)&& a!='-') //se non è un numero o un carattere alfabetico minuscolo
+       
+    nuovo=nuovo;
+   else{ nuovo=nuovo+a;}    
+ 
+} //for
+
+//System.out.println(nuovo);
+nuovo = nuovo.replace("--", "-");
+//System.out.println(nuovo);
+return nuovo;  
+}//trattaChar
+    
+    
     
     
 }//class
