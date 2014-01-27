@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package javaapplication5;
+package PilotaRetrive;
 
 import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.Statement;
