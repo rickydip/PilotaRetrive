@@ -11,6 +11,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Vector;
 
@@ -31,9 +32,9 @@ public class Retrive {
     private String op_logico;
     //contiene le info estratte dalle tabelle di kunena
     private Hashtable <String,String[]> informazioni = new Hashtable <String,String[]>();
-    //contiene le info chiave, catid
-    private Hashtable <String,String> h = new Hashtable <String,String>();
-    
+    //vettore che salva tutte le chiavi mesid/id
+    ArrayList<String> vet1 = new ArrayList<String>(0);
+    ArrayList<String> vet2 = new ArrayList<String>(0);
 
     //costruttore
     public Retrive(ConnDB connessione, String[] keys, int n_keys, String op_logico) {
@@ -41,7 +42,7 @@ public class Retrive {
         this.keys = keys;
         this.n_keys = n_keys;
         this.op_logico = op_logico;
-        this.informazioni = informazioni;
+        //this.informazioni = informazioni;
     }
     
     //costruttore di default
@@ -91,9 +92,11 @@ public class Retrive {
 
     
     
-public void retrive(){
+    @SuppressWarnings("empty-statement")
+    public void retrive(){
     
-        Connection con = null;
+        Connection con = null;//la connessione è unica
+        
         PreparedStatement pst = null,pst1 = null;;
         ResultSet rs = null, rs1 = null;
 
@@ -105,15 +108,12 @@ String[] vett_com =new String[1];//ospita la prima parte di informazioni: messag
 String[] vett_com2=null;//ospita la seconda parte di informazioni: thread, catid,subject
 
 
-String[] vett=new String[4];
-for(int i=0;i<4;i++){vett[i]="";}
-//<String,String[]>
-//<id/mesid, [message,thread,catid,subject]>
+
 
 
 
         try {
-            
+            //inizializzo la connessione al db
             con = (Connection) DriverManager.getConnection(getConnessione().getUrl(),getConnessione().getUser(),getConnessione().getPassword());
             
            
@@ -144,12 +144,17 @@ for(int i=0;i<4;i++){vett[i]="";}
             while (rs.next()) {
                 //setto la chiave (mesid) e il message
                  chiave = Integer.toString(rs.getInt(1));
+                 String[] vett=new String[4];
+                 for(int i=0;i<4;i++){vett[i]="";}
                  vett[0]=rs.getString(2);//message
                 informazioni.put(chiave, vett);
+                vet1.add(chiave);//salvo la chiave
+                vet2.add(chiave);//salvo la chiave
                 System.out.print(rs.getInt(1)+": ");
                 System.out.println(rs.getString(2));
+                        
             }//while
-            
+            rs=null;
           
 //STEP 2            
             String selectFrom2 = "SELECT id ,thread,catid,subject FROM joomla.pbpfz_kunena_messages WHERE ";
@@ -169,7 +174,6 @@ for(int i=0;i<4;i++){vett[i]="";}
                      
             
             pst = con.prepareStatement(selectFrom2);
-            
             rs = pst.executeQuery();
                      
             
@@ -181,8 +185,8 @@ for(int i=0;i<4;i++){vett[i]="";}
                     //le estraggo
                     vett_com =(String[])informazioni.get(chiave);
                      //ne aggiungo altre associate alla chiave
+                        System.out.println("####"+vett_com[0]);
                         vett_com[1]=rs.getString(2);//thread
-                        h.put(chiave,rs.getString(3));
                         //
                         String query_catId="SELECT alias FROM joomla.pbpfz_kunena_categories WHERE id ='" +rs.getString(3)+"';";
                         System.out.println(query_catId);
@@ -192,7 +196,6 @@ for(int i=0;i<4;i++){vett[i]="";}
                         while (rs1.next()) { xx=rs1.getString(1);}
                         //
                         
-                        //
                         vett_com[2]=xx;//catid
                         vett_com[3]=rs.getString(4);//subject
                         
@@ -205,6 +208,7 @@ for(int i=0;i<4;i++){vett[i]="";}
                                                 
                     //le aggiorno    
                      informazioni.put(chiave, vett_com);
+                 vett_com = null;    
                 }//if
                 //se non sono già presenti informazioni
                 if(!informazioni.containsKey(chiave)){
@@ -213,9 +217,12 @@ for(int i=0;i<4;i++){vett[i]="";}
                    vett_com2[0]="";//message non presente
                    vett_com2[1]=rs.getString(2);//thread
                    //
-            //       v.addElement(chiave);
-                   h.put(chiave,rs.getString(3));
-                   
+                   //h.put(chiave,rs.getString(3));
+                  
+                  
+                   vet1.add(chiave);//salvo la chiave
+                   vet2.add(chiave);//salvo la chiave
+                  
                    //
                         String query_catId="SELECT alias FROM joomla.pbpfz_kunena_categories WHERE id ='" +rs.getString(3)+"';";
                         System.out.println(query_catId);
@@ -228,8 +235,6 @@ for(int i=0;i<4;i++){vett[i]="";}
                         //
                         vett_com2[2]=xx;//catid
                    
-                                     
-                   //vett_com2[2]=rs.getString(3);//catid
                    vett_com2[3]=rs.getString(4);//subject
                    //le inserisco
                    informazioni.put(chiave, vett_com2);
@@ -248,7 +253,22 @@ for(int i=0;i<4;i++){vett[i]="";}
                 */        
                         
             }//while
-/////////////////////////////         
+/////////////////////////////
+            
+            
+            
+//STEP 2.B            
+System.out.println("#########################FASE 2B  ########################");    
+            int dim3 =vet2.size();
+            System.out.println("Il vettore 2 che contiene le chiavi ha elementi n°: "+dim3);
+            
+            String queryb="";
+            
+            
+System.out.println("#########################################################");             
+/////////////////////7            
+            
+            
             
             
             //ADESSO ho tutte le info sull'hastable
@@ -256,18 +276,50 @@ for(int i=0;i<4;i++){vett[i]="";}
             
             int dim = informazioni.size();
             System.out.println("Per la ricerca delle key all'interno dei db, ho trovato occorrenze n°: "+dim);
-            int dim2 = h.size();
-           // System.out.println("L'hashtable che contiene chiave, catid ha elementi n°: "+dim2);
+            //int dim2 = h.size();
+            int dim2 = vet1.size();
+            System.out.println("Il vettore che contiene le chiavi ha elementi n°: "+dim2);
            
             
-///STEP 3      costuire l'url
+///STEP 3      costruire l'url
       
-            String[] urls = new String [dim2];
-            String url1="http://localhost/Joomla_3.2.1-Stable-Full_Package/index.php/forum/index.php";
+      /*
+           for(int i=0; i<dim2; i++){
+              System.out.println(vet.get(i));
+        }//for
+      */   
+            
+            
+         String url_base ="http://localhost/Joomla_3.2.1-Stable-Full_Package/index.php/forum/";
+         String[] urls = null;
+         String url_finale = "";
+         String alias = "";
+         String thread = "";
+         String subject= "";
+         String id = "";
          
+         String[] info = null;
+         for(int i=0, y=0; i<dim2; i++,y++){
+              System.out.println(vet1.get(i));
+              info = informazioni.get(vet1.get(i));
+                                      
+             // info[0] -> message
+             // info[1] -> thread
+             // info[2] -> catid-> alias
+             // info[3] -> subject
+              thread = info[1];
+              alias = info[2];
+              subject = info[3];
+              id = vet1.get(i); //chiave del post
+             
+              url_finale =url_base+alias+"/"+thread+"-"+subject+".html#"+id;
+               System.out.println(url_finale);
+              //urls[y] = url_finale;
+              info=null;
             
-     
-            
+               
+               
+         }//for   
         
        
                 

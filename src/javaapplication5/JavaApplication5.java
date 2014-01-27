@@ -54,11 +54,11 @@ public class JavaApplication5 {
       
       //###############################
       //Le chiavi da cercare sono 3 //#
-      int n = 3 ;                   //#  
+      int n = 2 ;                   //#  
       String[] keys = new String[n];//#
       keys[0]="sassuolo";           //# 
       keys[1]="conte";              //#
-      keys[2]="topic";              //#
+      //keys[2]="topic";              //#
       String op_logico="OR";        //#
       //###############################
       
