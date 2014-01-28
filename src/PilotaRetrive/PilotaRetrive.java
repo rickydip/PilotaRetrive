@@ -66,6 +66,10 @@ public class PilotaRetrive {
             Logger.getLogger(PilotaRetrive.class.getName()).log(Level.SEVERE, null, ex);
         }
     
+        System.out.println("[Main]Nell'hashtable ci sono: "+output.size());
+        
+        
+        
     }    
 
      
