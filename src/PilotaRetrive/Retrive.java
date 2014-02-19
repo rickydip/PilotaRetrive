@@ -21,6 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -43,10 +44,11 @@ public class Retrive {
     private String op_logico;
     //contiene le info estratte dalle tabelle di kunena
     private Hashtable <String,String[]> informazioni = new Hashtable <String,String[]>();
+    private Hashtable <String,String[]> informazioni2 = new Hashtable <String,String[]>();
     //vettori di comodo che salvano le chiavi mesid/id
     ArrayList<String> vet1 = new ArrayList<String>(0);
     ArrayList<String> vet2 = new ArrayList<String>(0);
-
+    ArrayList<String> vet3 = new ArrayList<String>(0);
     
     
     /**
@@ -108,13 +110,56 @@ public class Retrive {
     }
 
     
+/**
+ * Metodo pruncipale
+ * @return
+ * @throws SQLException 
+ */    
+public Hashtable retrive_all() throws SQLException{
+    Hashtable <String,String> output_kunena = new Hashtable <String,String>();
+    Hashtable <String,String> output_mediawiki = new Hashtable <String,String>();
+    Hashtable <String,String> output_finale = new Hashtable <String,String>();
     
+    output_kunena = retrive_kunena();
+    System.out.println("\n\n");
+    output_mediawiki = retrive_mediawiki();
+    System.out.println("\n\n");
     
+    output_finale = fondiHashtable(output_kunena,output_mediawiki);
+    
+    return output_finale;
+    
+}//retrive_all    
 
+
+/**
+ * Metodo che fonde i due hashtable contenenti i risultati della ricerca
+ * su kunena e mediawiki
+ * @param kunena
+ * @param wiki
+ * @return 
+ */
+public Hashtable fondiHashtable(Hashtable <String,String> kunena,Hashtable <String,String> wiki){
+    
+    Hashtable <String,String> output = new Hashtable <String,String>();
+    
+    output.putAll(wiki);
+    output.putAll(kunena);   
+   
+   // System.out.println("adesso l hashtable finale ha n°: "+output.size());
     
     
-    
-public Hashtable retrive() throws SQLException{
+  return output; 
+}//fondiHashtable
+
+
+
+/**
+ * Metodo che esegue la ricerca su kunena
+ * @return
+ * @throws SQLException 
+ */
+public Hashtable retrive_kunena() throws SQLException{
         
     Hashtable <String,String> output = new Hashtable <String,String>();
     
@@ -147,9 +192,11 @@ public Hashtable retrive() throws SQLException{
             //System.out.println(where_cond);
             //query completa
             selectFrom1 = selectFrom1 +where_cond1;
-            System.out.println("#############################################");
-            System.out.println(selectFrom1);
-            System.out.println("#############################################\n");
+            //debug
+            //System.out.println("#############################################");
+            //System.out.println(selectFrom1);
+            //System.out.println("#############################################\n");
+            //
             pst = con.prepareStatement(selectFrom1);
             rs = pst.executeQuery();
             while (rs.next()) {
@@ -170,14 +217,15 @@ public Hashtable retrive() throws SQLException{
                 vet1.add(chiave);//salvo la chiave 
                 vet2.add(chiave);//salvo la chiave
                 
-                //debug
-                System.out.print(rs.getInt(1)+": ");
-                System.out.println(rs.getString(2));
+                //debug output delle prime info trovate
+                //System.out.print(rs.getInt(1)+": ");
+                //System.out.println(rs.getString(2));
                 //
                 
             }//while
             rs=null;//pulisco 
             pst=null;//pulisco
+            
 //STEP 2   interrogo la tabella  kunena_messages
             //var di comodo
             String selectFrom2 = "SELECT id ,thread,catid,subject FROM joomla.pbpfz_kunena_messages WHERE ";
@@ -187,7 +235,9 @@ public Hashtable retrive() throws SQLException{
             for(int i=0;i<getN_keys();i++){
                 if(i==0){ com2=" subject LIKE '%"+getKeys()[i]+"%' ";}
                 else{com2=getOp_logico()+" subject LIKE '%"+getKeys()[i]+"%' ";}
-                System.out.println(vet2.size());
+                //debug
+                //System.out.println(vet2.size());
+                //
                 if(vet2.size()!=0 && flag_x!=1){
                     flag_x=1;
                     for(int u=0;u<vet2.size();u++){
@@ -201,24 +251,32 @@ public Hashtable retrive() throws SQLException{
             //System.out.println(where_cond2);
             //query finale
             selectFrom2 = selectFrom2 +where_cond2;
-            System.out.println("#############################################");
-            System.out.println(selectFrom2);
-            System.out.println("#############################################\n");
+            //debug
+            //System.out.println("#############################################");
+            //System.out.println(selectFrom2);
+            //System.out.println("#############################################\n");
+            //
             pst = con.prepareStatement(selectFrom2);
             rs = pst.executeQuery();
             while (rs.next()) {
                 chiave = Integer.toString(rs.getInt(1));
                 //se sono già presenti informazioni con quella chiave                
                 if(informazioni.containsKey(chiave)){
-                    System.out.println("*)Informazioni sulla chiave : "+chiave+" SONO PRESENTI, le completo)");
+                    //debug
+                    //System.out.println("*)Informazioni sulla chiave : "+chiave+" SONO PRESENTI, le completo)");
+                    //
                     //le estraggo
                     vett_com =(String[])informazioni.get(chiave);
                     //ne aggiungo altre associate alla chiave
-                    System.out.println("####"+vett_com[0]);//era già piena dallo step 1
+                    //debug   
+                    //System.out.println("####"+vett_com[0]);//era già piena dallo step 1
+                    //
                     vett_com[1]=rs.getString(2);//thread
                     //
                     String query_catId="SELECT alias FROM joomla.pbpfz_kunena_categories WHERE id ='" +rs.getString(3)+"';";
-                    System.out.println(query_catId);
+                    //debug
+                    //System.out.println(query_catId);
+                    //
                     pst1 = con.prepareStatement(query_catId);
                     rs1 = pst1.executeQuery();
                     String xx ="";
@@ -228,10 +286,10 @@ public Hashtable retrive() throws SQLException{
                     vett_com[3]=rs.getString(4);//subject
                     
                     //debug
-                    System.out.print(chiave+":  ");
-                    for(int i=0;i<4;i++){System.out.print(vett_com[i]+",  ");}
-                    System.out.println(" .");
-                    
+                    //System.out.print(chiave+":  ");
+                    //for(int i=0;i<4;i++){System.out.print(vett_com[i]+",  ");}
+                    //System.out.println(" .");
+                    //
                     
                     //inserisco le informazioni nell'hashtable
                     informazioni.put(chiave, vett_com);
@@ -241,15 +299,18 @@ public Hashtable retrive() throws SQLException{
                 //se non sono già presenti informazioni con quella chiave
                 if(!informazioni.containsKey(chiave)){
                     //le estraggo
-                    System.out.println("*)Informazioni sulla chiave : "+chiave+" NON SONO PRESENTI, le completo)");
+                    //debug
+                    //System.out.println("*)Informazioni sulla chiave : "+chiave+" NON SONO PRESENTI, le completo)");
+                    //
                     vett_com2[0]="";//message non presente, non caricato nello step 1
                     vett_com2[1]=rs.getString(2);//thread
                     
                     vet1.add(chiave);//salvo la chiave
-                    //vet2.add(chiave);//salvo la chiave
-                    
+                     
                     String query_catId="SELECT alias FROM joomla.pbpfz_kunena_categories WHERE id ='" +rs.getString(3)+"';";
-                    System.out.println(query_catId);
+                    //debug
+                    //System.out.println(query_catId);
+                    //
                     pst1 = con.prepareStatement(query_catId);
                     rs1 = pst1.executeQuery();
                     String xx ="";
@@ -261,17 +322,17 @@ public Hashtable retrive() throws SQLException{
                     //inserisco le informazioni nell'hashtable
                     informazioni.put(chiave, vett_com2);
                     
-                    //stampo outpu di debug
-                    for(int i=0;i<4;i++) System.out.println(vett_com2[i]);
+                    //stampo output di debug
+                    //for(int i=0;i<4;i++) System.out.println(vett_com2[i]);
                     
                 }//if
             }//while
-            //ADESSO ho tutte le info sull'hashtable
+            
+     //ADESSO ho tutte le info sull'hashtable
             int dim = informazioni.size();
             System.out.println("L'hashtable contiene n°: "+dim+" elementi.");
-            //int dim2 = h.size();
-            int dim2 = vet1.size();
-            System.out.println("Sono presenti n°: "+dim2+" chiavi diverse");
+       
+            
 ///STEP 3   Creazione dell'url per risalire alle informazioni presenti nell'hashtable
             /*
             for(int i=0; i<dim2; i++){
@@ -288,8 +349,11 @@ public Hashtable retrive() throws SQLException{
             String subject_ok = "";
             String id = "";
             String[] info = null;
-            for(int i=0, y=0; i<dim2; i++,y++){
-                System.out.println(vet1.get(i));
+            for(int i=0, y=0; i<dim; i++,y++){
+                //debug
+                //System.out.println(vet1.get(i));
+                //
+                
                 info = informazioni.get(vet1.get(i));
                 
                 
@@ -319,8 +383,10 @@ public Hashtable retrive() throws SQLException{
 
 }    
 
+
 /**
- * Questa funzione si occupa di effettuare un 
+ * Metodo interno  retrive_kunena()
+ * 
  * @param subject
  * @return 
  */
@@ -363,7 +429,162 @@ nuovo = nuovo.replace("--", "-");
 return nuovo;  
 }//trattaChar
     
+
+/**
+ * Metodo che esegue la ricerca su mediawiki
+ * @return
+ * @throws SQLException 
+ */
+public Hashtable retrive_mediawiki() throws SQLException{
     
+    
+Hashtable <String,String> output = new Hashtable <String,String>();
+    
+            Connection con = null;//la connessione è unica
+            PreparedStatement pst = null;
+            
+            ResultSet rs = null;
+            String chiave ="";
+            
+            // try {
+            try {
+                //inizializzo la connessione al db
+                con = (Connection) DriverManager.getConnection(getConnessione().getUrl(),getConnessione().getUser(),getConnessione().getPassword());
+            } catch (SQLException ex) {
+                Logger.getLogger(Retrive.class.getName()).log(Level.SEVERE, null, ex);
+            }
+//STEP 1    interrogo la tabella  my_wiki.searchindex
+            String selectFrom1 = "SELECT * FROM my_wiki.searchindex WHERE si_text ";
+            String com1 = "", where_cond1 ="", where_cond2 ="";
+            for(int i=0;i<getN_keys();i++){
+                if(i==0){ com1=" LIKE '%"+getKeys()[i]+"%' ";}
+                else{com1=getOp_logico()+" si_text LIKE '%"+getKeys()[i]+"%' ";}
+                where_cond1=where_cond1+com1;
+            }//for
+            where_cond1=where_cond1+"OR si_title";
+            com1 = "";
+            for(int i=0;i<getN_keys();i++){
+                if(i==0){ com1=" LIKE '%"+getKeys()[i]+"%' ";}
+                else{com1=getOp_logico()+" si_title LIKE '%"+getKeys()[i]+"%' ";}
+                where_cond2=where_cond2+com1;
+            }//for
+            
+            where_cond2=where_cond2+";";
+            //query completa
+            selectFrom1 = selectFrom1 +where_cond1+where_cond2;
+            
+                
+            //debug
+            //System.out.println("#############################################");
+            //System.out.println(selectFrom1);
+            //System.out.println("#############################################\n");
+            //
+            
+            pst = con.prepareStatement(selectFrom1);
+            rs = pst.executeQuery();
+            while (rs.next()) {
+                //setto la chiave si_page, si_title, si_text 
+                chiave = Integer.toString(rs.getInt(1));
+                //metto un prefisso
+                chiave="mw_"+chiave;
+                // creo un vettore di comodo
+                int m=2;
+                String[] vett=new String[m];
+                // lo inizializzo
+                for(int i=0;i<m;i++){vett[i]="";}
+                
+                // posizione 0 metto il "si_title"
+                vett[0]=rs.getString(2);//si_title
+                
+                //tratto il contenuto
+                vett[0]=trattaString(vett[0]);
+                
+                // posizione 1 metto il "si_text"
+                vett[1]=rs.getString(3);//si_text
+                
+                //tratto il contenuto
+                vett[1]=trattaString(vett[1]);
+                
+                //inserisco le informazioni nell'hashtable
+                informazioni2.put(chiave, vett);
+                
+               vet3.add(chiave);//salvo la chiave 
+              //  vet2.add(chiave);//salvo la chiave
+                
+                //debug
+                //System.out.print(chiave+": ");
+                //System.out.println(vett[0]);
+                //System.out.println(vett[1]);
+                //System.out.println("\n\n");
+                //
+                
+            }//while
+        
+
+            //ADESSO ho tutte le info sull'hashtable
+            int dim = informazioni2.size();
+            System.out.println("L'hashtable mediawiki contiene n°: "+dim+" elementi.");
+            
+            
+///STEP 2   Creazione dell'url per risalire alle informazioni presenti nell'hashtable
+            
+            //var di comodo
+            String url_base ="http://localhost/mediawiki/index.php/";
+            String[] urls = null;
+            String url_finale = "";
+            String[] info = null;
+            String si_title = "";
+            
+            for(int i=0; i<dim; i++){
+                //debug
+                //System.out.println(vet3.get(i));//stampo la chiave
+                //
+                
+                info = informazioni2.get(vet3.get(i));
+                si_title = info[0];//si_title
+                //info[1]  si_text
+                  
+                url_finale =url_base+si_title;
+                //debug
+                System.out.println(url_finale);//stampo l url 
+                //
+                
+                output.put(url_finale,info[1]);
+                
+                info=null;
+                
+            }//for
+              
+        
+        return output;
+
+}    
+
+/**
+ * Metodo interno a retrive_mediawiki()
+ * 
+ * @param subject
+ * @return 
+ */
+public String trattaString(String subject){
+    
+subject = subject.replace("u8c3a0","à");
+subject = subject.replace("u8c3b2","ò");
+subject = subject.replace("u8c3a8","è");
+subject = subject.replace("u8c3a9","é");
+subject = subject.replace("u8c3b9","ù");
+subject = subject.replace("u8c3ac","ì");
+subject = subject.replace("u8c3a7","ç");
+subject = subject.replace("u800","");
+
+
+
+//System.out.println(subject);
+
+return subject ;  
+}//trattaChar
+
+
     
     
 }//class
